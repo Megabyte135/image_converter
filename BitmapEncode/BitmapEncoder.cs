@@ -23,13 +23,13 @@ namespace BitmapEncode
             return encoder.ToString();
         }
 
-        //public IBitmap Decode(BitmapText<TBitmap> bitmapText)
-        //{
-        //    var text = bitmapText.ToString();
-        //    var decoder = BitmapText<TBitmap>.FromString(text);
+        public IBitmap Decode(BitmapText<TBitmap> bitmapText)
+        {
+            var text = bitmapText.ToString();
+            var decoder = BitmapText<TBitmap>.FromString(text);
 
-        //    return decoder.ToBitmap();
-        //}
+            return decoder.ToBitmap();
+        }
 
         public double CalculateEntropy(IBitmap image)
         {
@@ -59,14 +59,14 @@ namespace BitmapEncode
             return entropy;
         }
 
-        //public double CalculateRedundancy(IBitmap image)
-        //{
-        //    int colorDepth = Image.GetPixelFormatSize(image.Depth);
-        //    double entropy = CalculateEntropy(image);
-        //    double maxEntropy = colorDepth;
+        public double CalculateRedundancy(IBitmap image)
+        {
+            int colorDepth = (int)image.Depth/8;
+            double entropy = CalculateEntropy(image);
+            double maxEntropy = colorDepth;
 
-        //    return 1.0 - (entropy / maxEntropy);
-        //}
+            return 1.0 - (entropy / maxEntropy);
+        }
 
         public double CalculateCompressionRate(long originalSize, long compressedSize)
         {

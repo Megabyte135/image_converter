@@ -1,6 +1,8 @@
 ﻿using BitmapEncode.Images;
 using BitmapEncode.Images.Backstage;
 using BitmapEncode.Images.Interfaces;
+using System.Drawing;
+using Color = BitmapEncode.Images.Color;
 
 namespace BitmapEncode.BitmapVariants
 {
@@ -12,12 +14,24 @@ namespace BitmapEncode.BitmapVariants
         public int Height { get; set; }
         public PixelFormat Depth { get; set; }
 
+        public CustomBitmap(string inputPath, PixelFormat depth)
+        {
+            Image image = Image.FromFile(inputPath);
+            if (image == null)
+                throw new ArgumentNullException(nameof(image));
+            Width = image.Width;
+            Height = image.Height;
+            Depth = depth;
+            _pixels = new Color[Width, Height];
+            FromImage(inputPath);
+        }
+
         public CustomBitmap(int width, int height, PixelFormat depth)
         {
             Width = width;
             Height = height;
             Depth = depth;
-            _pixels = new Color[width, height];
+            _pixels = new Color[Width, Height];
         }
 
         public void SetPixel(int x, int y, Color color)
@@ -34,7 +48,7 @@ namespace BitmapEncode.BitmapVariants
             return _pixels[x, y];
         }
 
-        public IBitmap FromImage(string imagePath)
+        private IBitmap FromImage(string imagePath)
         {
             string extension = Path.GetExtension(imagePath).ToLower();
             IImageHandler loader = ImageHandlerFactory.GetHandler(extension);
@@ -46,7 +60,12 @@ namespace BitmapEncode.BitmapVariants
         public void ToImage(string outputPath)
         {
             string extension = Path.GetExtension(outputPath).ToLower();
-            IImageHandler saver = ImageHandlerFactory.GetHandler(extension);
+            if (extension != ".bmp")
+            {
+                throw new ArgumentException("The output path must have a .bmp extension.");
+            }
+
+            BmpImageHandler saver = new BmpImageHandler();
             saver.Save(this, outputPath);
         }
 

@@ -1,7 +1,6 @@
 ﻿using BitmapEncode.BitmapVariants;
 using BitmapEncode.Images.Interfaces;
 using System.IO.Compression;
-using System.Runtime.Intrinsics.Arm;
 using System.Text;
 
 namespace BitmapEncode.Images.Handlers
@@ -14,7 +13,6 @@ namespace BitmapEncode.Images.Handlers
             {
                 BinaryReader reader = new BinaryReader(fs);
 
-                // Read and validate PNG signature
                 byte[] signature = reader.ReadBytes(8);
                 byte[] expectedSignature = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
                 if (!CompareByteArrays(signature, expectedSignature))
@@ -22,7 +20,6 @@ namespace BitmapEncode.Images.Handlers
                     throw new Exception("Invalid PNG file signature.");
                 }
 
-                // Variables to hold image data
                 int width = 0;
                 int height = 0;
                 byte bitDepth = 0;
@@ -32,34 +29,27 @@ namespace BitmapEncode.Images.Handlers
                 byte interlaceMethod = 0;
                 List<byte> compressedData = new List<byte>();
 
-                // Read chunks
                 bool hasIHDR = false;
                 bool hasIEND = false;
 
                 while (!hasIEND)
                 {
-                    // Read chunk length and type
                     uint chunkLength = ReadUInt32BigEndian(reader);
                     string chunkType = Encoding.ASCII.GetString(reader.ReadBytes(4));
 
-                    // Read chunk data
                     byte[] chunkData = reader.ReadBytes((int)chunkLength);
 
-                    // Read CRC (but we will skip CRC checking for simplicity)
                     uint crc = ReadUInt32BigEndian(reader);
 
-                    // Handle chunk types
                     switch (chunkType)
                     {
                         case "IHDR":
-                            // IHDR chunk, should be the first chunk
                             if (hasIHDR)
                             {
                                 throw new Exception("Multiple IHDR chunks found.");
                             }
                             hasIHDR = true;
 
-                            // Parse IHDR data
                             width = (int)ReadUInt32BigEndian(chunkData, 0);
                             height = (int)ReadUInt32BigEndian(chunkData, 4);
                             bitDepth = chunkData[8];
@@ -68,7 +58,6 @@ namespace BitmapEncode.Images.Handlers
                             filterMethod = chunkData[11];
                             interlaceMethod = chunkData[12];
 
-                            // For simplicity, only support no interlace
                             if (interlaceMethod != 0)
                             {
                                 throw new NotSupportedException("Interlaced PNG images are not supported.");
@@ -77,7 +66,6 @@ namespace BitmapEncode.Images.Handlers
                             break;
 
                         case "IDAT":
-                            // IDAT chunk, contains compressed image data
                             compressedData.AddRange(chunkData);
                             break;
 
@@ -86,20 +74,17 @@ namespace BitmapEncode.Images.Handlers
                             break;
 
                         default:
-                            // Skip other chunks
                             break;
                     }
                 }
 
-                // Decompress the image data using ZLibStream
+                // Decompress with ZLibStream
                 byte[] imageData = DecompressData(compressedData.ToArray());
 
-                // Calculate bytes per pixel and other parameters
                 int bytesPerPixel = GetBytesPerPixel(colorType, bitDepth);
                 int bitsPerPixel = bytesPerPixel * 8;
                 int stride = (width * bitsPerPixel + 7) / 8;
 
-                // Reconstruct the image data
                 byte[] reconstructedData = new byte[height * stride];
 
                 int srcOffset = 0;
@@ -113,128 +98,115 @@ namespace BitmapEncode.Images.Handlers
                     byte filterType = imageData[srcOffset++];
                     byte[] scanline = new byte[stride];
 
-                    // Copy the scanline data
                     Array.Copy(imageData, srcOffset, scanline, 0, stride);
                     srcOffset += stride;
 
-                    // Apply the filter
                     ApplyFilter(filterType, scanline, reconstructedData, dstOffset, bytesPerPixel, y > 0 ? reconstructedData : null, dstOffset - stride);
 
                     dstOffset += stride;
                 }
 
-                // Now we have the reconstructed pixel data
-                // Create a CustomBitmap and populate it with pixel data
-
                 CustomBitmap bitmap = new CustomBitmap(width, height, depth);
 
-                // Map the reconstructed data to the bitmap's pixel format
                 MapReconstructedDataToBitmap(reconstructedData, bitmap, colorType, bitDepth);
 
                 return bitmap;
             }
         }
 
-        public void Save(IBitmap bitmap, string path)
+        private int GetBytesPerPixel(byte colorType, byte bitDepth)
         {
-            using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            int bitsPerPixel = 0;
+            switch (colorType)
             {
-                BinaryWriter writer = new BinaryWriter(fs);
-
-                // Write PNG signature
-                byte[] signature = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
-                writer.Write(signature);
-
-                // Determine appropriate color type and bit depth based on bitmap depth
-                GetColorTypeAndBitDepth(bitmap.Depth, out byte colorType, out byte bitDepth);
-
-                // Write IHDR chunk
-                MemoryStream ihdrData = new MemoryStream();
-                BinaryWriter ihdrWriter = new BinaryWriter(ihdrData);
-
-                WriteUInt32BigEndian(ihdrWriter, (uint)bitmap.Width); // Width
-                WriteUInt32BigEndian(ihdrWriter, (uint)bitmap.Height); // Height
-                ihdrWriter.Write(bitDepth); // Bit depth
-                ihdrWriter.Write(colorType); // Color type
-                ihdrWriter.Write((byte)0); // Compression method
-                ihdrWriter.Write((byte)0); // Filter method
-                ihdrWriter.Write((byte)0); // Interlace method
-
-                WriteChunk(writer, "IHDR", ihdrData.ToArray());
-
-                // Prepare image data
-                int bytesPerPixel = GetBytesPerPixel(colorType, bitDepth);
-                int bitsPerPixel = bytesPerPixel * 8;
-                int stride = ((bitmap.Width * bitsPerPixel) + 7) / 8;
-                byte[] imageData = new byte[bitmap.Height * (1 + stride)]; // 1 extra byte per scanline for filter type
-
-                int offset = 0;
-
-                for (int y = 0; y < bitmap.Height; y++)
-                {
-                    imageData[offset++] = 0; // Filter type 0 (None)
-
-                    byte[] scanline = new byte[stride];
-                    int scanlineOffset = 0;
-
-                    if (bitDepth < 8)
-                    {
-                        byte currentByte = 0;
-                        int bitsFilled = 0;
-
-                        for (int x = 0; x < bitmap.Width; x++)
-                        {
-                            Color color = bitmap.GetPixel(x, y);
-                            byte[] pixelBytes = color.ToBytes(bitmap.Depth);
-                            byte value = pixelBytes[0];
-
-                            // Shift the value to the correct position
-                            currentByte <<= bitDepth;
-                            currentByte |= (byte)(value & ((1 << bitDepth) - 1));
-                            bitsFilled += bitDepth;
-
-                            if (bitsFilled >= 8)
-                            {
-                                scanline[scanlineOffset++] = currentByte;
-                                currentByte = 0;
-                                bitsFilled = 0;
-                            }
-                        }
-
-                        // If there are remaining bits, shift them to the left
-                        if (bitsFilled > 0)
-                        {
-                            currentByte <<= (8 - bitsFilled);
-                            scanline[scanlineOffset++] = currentByte;
-                        }
-                    }
-                    else
-                    {
-                        for (int x = 0; x < bitmap.Width; x++)
-                        {
-                            Color color = bitmap.GetPixel(x, y);
-                            byte[] pixelBytes = color.ToBytes(bitmap.Depth);
-                            Array.Copy(pixelBytes, 0, scanline, scanlineOffset, pixelBytes.Length);
-                            scanlineOffset += pixelBytes.Length;
-                        }
-                    }
-
-                    Array.Copy(scanline, 0, imageData, offset, scanline.Length);
-                    offset += scanline.Length;
-                }
-
-                // Compress image data using zlib
-                byte[] compressedData = CompressData(imageData);
-
-                // Write IDAT chunk(s)
-                WriteChunk(writer, "IDAT", compressedData);
-
-                // Write IEND chunk
-                WriteChunk(writer, "IEND", new byte[0]);
+                case 0: // Grayscale
+                    bitsPerPixel = bitDepth;
+                    break;
+                case 2: // Truecolor
+                    bitsPerPixel = bitDepth * 3;
+                    break;
+                case 3: // Indexed-color
+                    bitsPerPixel = bitDepth;
+                    break;
+                case 4: // Grayscale with alpha
+                    bitsPerPixel = bitDepth * 2;
+                    break;
+                case 6: // Truecolor with alpha
+                    bitsPerPixel = bitDepth * 4;
+                    break;
+                default:
+                    throw new NotSupportedException("Unsupported color type.");
             }
+            return (bitsPerPixel + 7) / 8;
         }
 
-        // Helper methods
+        private void WriteChunk(BinaryWriter writer, string chunkType, byte[] data)
+        {
+            WriteUInt32BigEndian(writer, (uint)data.Length);
+            byte[] chunkTypeBytes = Encoding.ASCII.GetBytes(chunkType);
+            writer.Write(chunkTypeBytes);
+            writer.Write(data);
+
+            byte[] crcData = new byte[chunkTypeBytes.Length + data.Length];
+            Array.Copy(chunkTypeBytes, 0, crcData, 0, chunkTypeBytes.Length);
+            Array.Copy(data, 0, crcData, chunkTypeBytes.Length, data.Length);
+            uint crc = Crc32(crcData);
+
+            WriteUInt32BigEndian(writer, crc);
+        }
+
+        private void WriteUInt32BigEndian(BinaryWriter writer, uint value)
+        {
+            byte[] bytes = BitConverter.GetBytes(value);
+            Array.Reverse(bytes);
+            writer.Write(bytes);
+        }
+
+        private uint Crc32(byte[] data)
+        {
+            uint crc = 0xFFFFFFFF;
+
+            foreach (byte b in data)
+            {
+                crc ^= b;
+                for (int k = 0; k < 8; k++)
+                {
+                    if ((crc & 1) != 0)
+                        crc = (crc >> 1) ^ 0xEDB88320;
+                    else
+                        crc = crc >> 1;
+                }
+            }
+
+            return ~crc;
+        }
+
+        private byte FindClosestColorIndex(Color color, List<Color> palette)
+        {
+            byte closestIndex = 0;
+            double minDistance = double.MaxValue;
+
+            for (int i = 0; i < palette.Count; i++)
+            {
+                Color paletteColor = palette[i];
+                double distance = ColorDistance(color, paletteColor);
+                if (distance < minDistance)
+                {
+                    minDistance = distance;
+                    closestIndex = (byte)i;
+                }
+            }
+
+            return closestIndex;
+        }
+
+        private double ColorDistance(Color c1, Color c2)
+        {
+            int dr = c1.R - c2.R;
+            int dg = c1.G - c2.G;
+            int db = c1.B - c2.B;
+            return Math.Sqrt(dr * dr + dg * dg + db * db);
+        }
 
         private bool CompareByteArrays(byte[] a1, byte[] a2)
         {
@@ -281,7 +253,6 @@ namespace BitmapEncode.Images.Handlers
             switch (filterType)
             {
                 case 0: // None
-                        // No filtering, copy scanline directly
                     Array.Copy(scanline, 0, reconstructedData, offset, scanline.Length);
                     break;
 
@@ -345,89 +316,6 @@ namespace BitmapEncode.Images.Handlers
                 return c;
         }
 
-        private void WriteUInt32BigEndian(BinaryWriter writer, uint value)
-        {
-            byte[] bytes = BitConverter.GetBytes(value);
-            Array.Reverse(bytes); // Convert to big-endian
-            writer.Write(bytes);
-        }
-
-        private void WriteChunk(BinaryWriter writer, string chunkType, byte[] data)
-        {
-            uint length = (uint)data.Length;
-            WriteUInt32BigEndian(writer, length);
-            byte[] chunkTypeBytes = Encoding.ASCII.GetBytes(chunkType);
-            writer.Write(chunkTypeBytes);
-            writer.Write(data);
-
-            // Compute CRC of chunk type and data
-            byte[] crcData = new byte[chunkTypeBytes.Length + data.Length];
-            Array.Copy(chunkTypeBytes, 0, crcData, 0, chunkTypeBytes.Length);
-            Array.Copy(data, 0, crcData, chunkTypeBytes.Length, data.Length);
-            uint crc = Crc32(crcData);
-
-            WriteUInt32BigEndian(writer, crc);
-        }
-
-        private uint Crc32(byte[] data)
-        {
-            uint crc = 0xFFFFFFFF;
-
-            foreach (byte b in data)
-            {
-                crc ^= b;
-                for (int k = 0; k < 8; k++)
-                {
-                    if ((crc & 1) != 0)
-                        crc = (crc >> 1) ^ 0xEDB88320;
-                    else
-                        crc = crc >> 1;
-                }
-            }
-
-            return ~crc;
-        }
-
-        private byte[] CompressData(byte[] data)
-        {
-            using (MemoryStream ms = new MemoryStream())
-            {
-                using (System.IO.Compression.ZLibStream zlibStream = new System.IO.Compression.ZLibStream(ms, CompressionLevel.Optimal))
-                {
-                    zlibStream.Write(data, 0, data.Length);
-                }
-                return ms.ToArray();
-            }
-        }
-
-        private int GetBytesPerPixel(byte colorType, byte bitDepth)
-        {
-            // Calculate bytes per pixel based on color type and bit depth
-            int bitsPerPixel = bitDepth;
-            switch (colorType)
-            {
-                case 0: // Grayscale
-                    bitsPerPixel *= 1;
-                    break;
-                case 2: // Truecolor
-                    bitsPerPixel *= 3;
-                    break;
-                case 3: // Indexed-color
-                    bitsPerPixel *= 1;
-                    break;
-                case 4: // Grayscale with alpha
-                    bitsPerPixel *= 2;
-                    break;
-                case 6: // Truecolor with alpha
-                    bitsPerPixel *= 4;
-                    break;
-                default:
-                    throw new NotSupportedException("Unsupported color type.");
-            }
-
-            return (bitsPerPixel + 7) / 8;
-        }
-
         private void MapReconstructedDataToBitmap(byte[] data, CustomBitmap bitmap, byte colorType, byte bitDepth)
         {
             int width = bitmap.Width;
@@ -460,8 +348,7 @@ namespace BitmapEncode.Images.Handlers
                             color.B = GetValueFromData(data, pixelOffset + 2 * bytesPerSample(bitDepth), bitDepth);
                             color.A = 255;
                             break;
-                        case 3: // Indexed-color
-                                // For simplicity, we will not handle palette in this implementation
+                        case 3: // Indexed
                             throw new NotSupportedException("Indexed-color PNG images are not supported.");
                         case 4: // Grayscale with alpha
                             gray = GetValueFromData(data, pixelOffset, bitDepth);
@@ -518,35 +405,6 @@ namespace BitmapEncode.Images.Handlers
                     return data[offset]; // For simplicity, we take the high byte only
                 default:
                     throw new NotSupportedException("Unsupported bit depth.");
-            }
-        }
-
-        private void GetColorTypeAndBitDepth(PixelFormat depth, out byte colorType, out byte bitDepth)
-        {
-            switch (depth)
-            {
-                case PixelFormat.OneBit:
-                    colorType = 0; // Grayscale
-                    bitDepth = 1;
-                    break;
-                case PixelFormat.EightBit:
-                    colorType = 0; // Grayscale
-                    bitDepth = 8;
-                    break;
-                case PixelFormat.SixteenBit:
-                    colorType = 4; // Grayscale with alpha
-                    bitDepth = 8;
-                    break;
-                case PixelFormat.TwentyFourBit:
-                    colorType = 2; // Truecolor
-                    bitDepth = 8;
-                    break;
-                case PixelFormat.ThirtyTwoBit:
-                    colorType = 6; // Truecolor with alpha
-                    bitDepth = 8;
-                    break;
-                default:
-                    throw new NotSupportedException("Unsupported pixel format.");
             }
         }
     }

@@ -1,7 +1,7 @@
 ﻿using BitmapEncode.BitmapVariants;
+using BitmapEncode.Images;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Text;
 
 namespace BitmapEncode
@@ -25,18 +25,18 @@ namespace BitmapEncode
             _height = bitmap.Height;
         }
 
-        //public TBitmap ToBitmap()
-        //{
-        //    TBitmap bitmap = new TBitmap();
-        //    for (int y = 0; y < _height; y++)
-        //    {
-        //        for (int x = 0; x < _width; x++)
-        //        {
-        //            bitmap.SetPixel(x, y, Pixels[x, y]);
-        //        }
-        //    }
-        //    return bitmap;
-        //}
+        public TBitmap ToBitmap()
+        {
+            TBitmap bitmap = new TBitmap();
+            for (int y = 0; y < _height; y++)
+            {
+                for (int x = 0; x < _width; x++)
+                {
+                    bitmap.SetPixel(x, y, Pixels[x, y]);
+                }
+            }
+            return bitmap;
+        }
 
         public override string ToString()
         {
@@ -72,10 +72,10 @@ namespace BitmapEncode
                 for (int x = 0; x < width; x++)
                 {
                     string[] rgb = pixelValues[x].Split(',');
-                    int r = int.Parse(rgb[0]);
-                    int g = int.Parse(rgb[1]);
-                    int b = int.Parse(rgb[2]);
-                    bitmapText.Pixels[x, y] = Color.FromArgb(r, g, b);
+                    byte r = byte.Parse(rgb[0]);
+                    byte g = byte.Parse(rgb[1]);
+                    byte b = byte.Parse(rgb[2]);
+                    bitmapText.Pixels[x, y] = new Color(r, g, b);
                 }
             }
 
