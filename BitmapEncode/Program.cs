@@ -6,7 +6,7 @@ namespace BitmapEncode
     {
         public static void Main(string[] args)
         {
-            string inputPath = "C:\\Users\\Yemeth\\Desktop\\images\\LIBRARIAN.ico";
+            string inputPath = "C:\\Users\\Yemeth\\Desktop\\images\\LIBRARIAN.png";
             string outputPath = "C:\\Users\\Yemeth\\Desktop\\images\\Flopping.bmp";
             
             CustomBitmap customBitmap = new(inputPath, Images.PixelFormat.OneBit);

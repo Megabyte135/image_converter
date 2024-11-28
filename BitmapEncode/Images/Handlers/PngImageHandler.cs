@@ -15,7 +15,6 @@ namespace BitmapEncode.Images.Handlers
             }
         }
 
-        // New method to load from a Stream
         public IBitmap Load(Stream stream, PixelFormat depth)
         {
             using (BinaryReader reader = new BinaryReader(stream))
@@ -81,7 +80,6 @@ namespace BitmapEncode.Images.Handlers
                             break;
 
                         default:
-                            // Ignore other chunks
                             break;
                     }
                 }
@@ -410,7 +408,7 @@ namespace BitmapEncode.Images.Handlers
                 case 8:
                     return data[offset];
                 case 16:
-                    return data[offset]; // For simplicity, we take the high byte only
+                    return data[offset];
                 default:
                     throw new NotSupportedException("Unsupported bit depth.");
             }

@@ -1,9 +1,6 @@
 ﻿using BitmapEncode.BitmapVariants;
-using BitmapEncode.Images;
 using BitmapEncode.Images.Interfaces;
 using BitmapEncode.Images.Handlers;
-using System;
-using System.IO;
 
 namespace BitmapEncode.Images.Backstage
 {
@@ -40,19 +37,15 @@ namespace BitmapEncode.Images.Backstage
                     ImageOffset = reader.ReadUInt32()
                 };
 
-                // Seek to ImageOffset
                 fs.Seek(entry.ImageOffset, SeekOrigin.Begin);
 
-                // Read the first 8 bytes to check for PNG signature
                 byte[] headerBytes = reader.ReadBytes(8);
-                fs.Seek(entry.ImageOffset, SeekOrigin.Begin); // Reset position
+                fs.Seek(entry.ImageOffset, SeekOrigin.Begin);
 
                 if (IsPng(headerBytes))
                 {
-                    // Read the PNG data
                     byte[] pngData = reader.ReadBytes((int)entry.BytesInRes);
 
-                    // Use PngImageHandler to load the image from the PNG data
                     using (MemoryStream pngStream = new MemoryStream(pngData))
                     {
                         PngImageHandler pngHandler = new PngImageHandler();
@@ -62,7 +55,6 @@ namespace BitmapEncode.Images.Backstage
                 }
                 else
                 {
-                    // Read BITMAPINFOHEADER
                     BITMAPINFOHEADER bmpInfoHeader = new BITMAPINFOHEADER
                     {
                         Size = reader.ReadUInt32(),
@@ -78,16 +70,12 @@ namespace BitmapEncode.Images.Backstage
                         ClrImportant = reader.ReadUInt32()
                     };
 
-                    // Calculate the height of the image (half of total height)
                     int height = bmpInfoHeader.Height / 2;
                     int width = bmpInfoHeader.Width;
                     int bpp = bmpInfoHeader.BitCount;
 
-                    // Create a CustomBitmap
                     CustomBitmap bitmap = new CustomBitmap(width, height, depth);
 
-                    // Rest of the code remains the same...
-                    // Read the color palette if necessary
                     Color[] colorTable = null;
                     if (bpp <= 8)
                     {
@@ -129,7 +117,6 @@ namespace BitmapEncode.Images.Backstage
                         throw new NotImplementedException($"Bit depth of {bpp} is not supported.");
                     }
 
-                    // Read the AND mask for transparency
                     ReadAndMask(reader, bitmap, width, height);
 
                     return bitmap;
@@ -173,7 +160,7 @@ namespace BitmapEncode.Images.Backstage
                     byte b = rowData[pixelIndex++];
                     byte g = rowData[pixelIndex++];
                     byte r = rowData[pixelIndex++];
-                    Color color = new Color(r, g, b, 255); // Default alpha is opaque
+                    Color color = new Color(r, g, b, 255);
                     bitmap.SetPixel(x, height - y - 1, color);
                 }
             }
@@ -196,7 +183,7 @@ namespace BitmapEncode.Images.Backstage
                 {
                     byte colorIndex = rowData[x];
                     Color color = colorTable[colorIndex];
-                    color.A = 255; // Default alpha is opaque
+                    color.A = 255;
                     bitmap.SetPixel(x, height - y - 1, color);
                 }
             }
@@ -222,7 +209,7 @@ namespace BitmapEncode.Images.Backstage
                     int shift = (1 - (pixelIndex % 2)) * 4;
                     byte colorIndex = (byte)((data >> shift) & 0x0F);
                     Color color = colorTable[colorIndex];
-                    color.A = 255; // Default alpha is opaque
+                    color.A = 255;
                     bitmap.SetPixel(x, height - y - 1, color);
                     pixelIndex++;
                 }
@@ -249,7 +236,7 @@ namespace BitmapEncode.Images.Backstage
                     int shift = 7 - (pixelIndex % 8);
                     byte colorIndex = (byte)((data >> shift) & 0x01);
                     Color color = colorTable[colorIndex];
-                    color.A = 255; // Default alpha is opaque
+                    color.A = 255;
                     bitmap.SetPixel(x, height - y - 1, color);
                     pixelIndex++;
                 }
@@ -278,12 +265,12 @@ namespace BitmapEncode.Images.Backstage
                     Color color = bitmap.GetPixel(x, height - y - 1);
                     if (maskBit == 1)
                     {
-                        // Transparent pixel
+                        // Transparent
                         color.A = 0;
                     }
                     else
                     {
-                        // Opaque pixel
+                        // Opaque
                         color.A = 255;
                     }
                     bitmap.SetPixel(x, height - y - 1, color);
@@ -306,9 +293,6 @@ namespace BitmapEncode.Images.Backstage
             return true;
         }
 
-        // The rest of the methods (Read32bppBitmap, Read24bppBitmap, etc.) remain the same
-
-        // Structures for ICO file format
         public struct ICONDIR
         {
             public ushort Reserved;

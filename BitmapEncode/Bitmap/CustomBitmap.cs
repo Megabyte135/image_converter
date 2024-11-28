@@ -57,7 +57,9 @@ namespace BitmapEncode.BitmapVariants
         {
             string extension = Path.GetExtension(imagePath).ToLower();
             IImageHandler loader = ImageHandlerFactory.GetHandler(extension);
-            return loader.Load(imagePath, Depth);
+            IBitmap bitmap = loader.Load(imagePath, Depth);
+            _pixels = bitmap.GetPixels();
+            return bitmap;
         }
 
         public void ToImage(string outputPath)

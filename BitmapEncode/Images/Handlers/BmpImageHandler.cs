@@ -29,10 +29,8 @@ public class BmpImageHandler : IImageHandler
             ushort bfReserved2 = reader.ReadUInt16(); // Reserved, must be 0
             uint bfOffBits = reader.ReadUInt32();     // Offset to pixel data
 
-            // Read DIB header
             uint dibHeaderSize = reader.ReadUInt32(); // DIB header size
 
-            // Variables to store BMP info
             int bmpWidth;
             int bmpHeight;
             ushort bmpPlanes;
@@ -46,7 +44,7 @@ public class BmpImageHandler : IImageHandler
 
             if (dibHeaderSize == 12)
             {
-                // BITMAPCOREHEADER (OS/2 BMP)
+                // BITMAPCOREHEADER
                 bmpWidth = reader.ReadUInt16();
                 bmpHeight = reader.ReadUInt16();
                 bmpPlanes = reader.ReadUInt16();
@@ -73,7 +71,7 @@ public class BmpImageHandler : IImageHandler
                 bmpClrUsed = reader.ReadUInt32();
                 bmpClrImportant = reader.ReadUInt32();
 
-                // Skip remaining header bytes if any
+                // Skip remaining header bytes
                 int remainingHeaderBytes = (int)dibHeaderSize - 40;
                 if (remainingHeaderBytes > 0)
                 {
@@ -103,7 +101,6 @@ public class BmpImageHandler : IImageHandler
                 colorTableSize = numColors * (dibHeaderSize == 12 ? 3 : 4); // 3 bytes per color for BITMAPCOREHEADER, 4 bytes otherwise
             }
 
-            // Read color table if present
             byte[] colorTable = reader.ReadBytes(colorTableSize);
 
             // Calculate stride (row width in bytes, including padding)
@@ -115,11 +112,9 @@ public class BmpImageHandler : IImageHandler
             int pixelArraySize = stride * Math.Abs(bmpHeight);
             byte[] pixelData = reader.ReadBytes(pixelArraySize);
 
-            // Create bitmap
             int imageHeight = Math.Abs(bmpHeight);
             CustomBitmap bitmap = new CustomBitmap(bmpWidth, imageHeight, depth);
 
-            // Map the pixel data into CustomBitmap
             MapBmpDataToBitmap(pixelData, bitmap, bmpWidth, bmpHeight, bmpBitCount, colorTable, stride, dibHeaderSize == 12);
 
             return bitmap;
@@ -242,7 +237,7 @@ public class BmpImageHandler : IImageHandler
 
     public void Save(IBitmap bitmap, string path)
     {
-        ushort bitsPerPixel = GetBitsPerPixel(bitmap.Depth);
+        ushort bitsPerPixel = (ushort)bitmap.Depth;
         uint bytesPerPixel = bitsPerPixel / 8u;
 
         int padding = (4 - ((int)(bitmap.Width * bytesPerPixel) % 4)) % 4;
@@ -255,12 +250,6 @@ public class BmpImageHandler : IImageHandler
         uint masksSize = 0u;
 
         uint compression = 0u; // BI_RGB
-
-        if (bitmap.Depth == PixelFormat.SixteenBit)
-        {
-            compression = 3u; // BI_BITFIELDS
-            masksSize = 12u;  // 3*4byte
-        }
 
         uint pixelDataOffset = fileHeaderSize + infoHeaderSize + masksSize;
         uint fileSize = pixelDataOffset + imageSize;
@@ -287,17 +276,6 @@ public class BmpImageHandler : IImageHandler
             writer.Write(0);
             writer.Write(0);
 
-            // Write color masks
-            if (bitmap.Depth == PixelFormat.SixteenBit)
-            {
-                // Red mask / 5 bits
-                writer.Write(0x0000F800u);
-                // Green mask / 6 bits
-                writer.Write(0x000007E0u);
-                // Blue mask / 5 bits
-                writer.Write(0x0000001Fu);
-            }
-
             // Pixel data
             switch (bitmap.Depth)
             {
@@ -306,9 +284,6 @@ public class BmpImageHandler : IImageHandler
                     break;
                 case PixelFormat.EightBit:
                     Write8BitBitmap(writer, bitmap, padding);
-                    break;
-                case PixelFormat.SixteenBit:
-                    Write16BitBitmap(writer, bitmap, padding);
                     break;
                 case PixelFormat.TwentyFourBit:
                     Write24BitBitmap(writer, bitmap, padding);
@@ -320,19 +295,6 @@ public class BmpImageHandler : IImageHandler
                     throw new NotSupportedException("Unsupported pixel format.");
             }
         }
-    }
-
-    private ushort GetBitsPerPixel(PixelFormat depth)
-    {
-        return depth switch
-        {
-            PixelFormat.OneBit => 1,
-            PixelFormat.EightBit => 8,
-            PixelFormat.SixteenBit => 16,
-            PixelFormat.TwentyFourBit => 24,
-            PixelFormat.ThirtyTwoBit => 32,
-            _ => throw new NotSupportedException("Unsupported pixel format."),
-        };
     }
 
     private void Write1BitBitmap(BinaryWriter writer, IBitmap bitmap, int padding)
@@ -391,30 +353,6 @@ public class BmpImageHandler : IImageHandler
             }
         }
     }
-
-
-
-    private void Write16BitBitmap(BinaryWriter writer, IBitmap bitmap, int padding)
-    {
-        for (int y = bitmap.Height - 1; y >= 0; y--)
-        {
-            for (int x = 0; x < bitmap.Width; x++)
-            {
-                Color color = bitmap.GetPixel(x, y);
-                ushort r = (ushort)(color.R >> 3);
-                ushort g = (ushort)(color.G >> 2);
-                ushort b = (ushort)(color.B >> 3);
-                ushort pixel = (ushort)((r << 11) | (g << 5) | b);
-                writer.Write(pixel);
-            }
-
-            for (int p = 0; p < padding; p++)
-            {
-                writer.Write((byte)0);
-            }
-        }
-    }
-
 
     private void Write24BitBitmap(BinaryWriter writer, IBitmap bitmap, int padding)
     {
