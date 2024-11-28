@@ -14,6 +14,11 @@ namespace BitmapEncode.BitmapVariants
         public int Height { get; set; }
         public PixelFormat Depth { get; set; }
 
+        public CustomBitmap()
+        {
+            
+        }
+
         public CustomBitmap(string inputPath, PixelFormat depth)
         {
             Image image = Image.FromFile(inputPath);
@@ -52,9 +57,7 @@ namespace BitmapEncode.BitmapVariants
         {
             string extension = Path.GetExtension(imagePath).ToLower();
             IImageHandler loader = ImageHandlerFactory.GetHandler(extension);
-            var d = loader.Load(imagePath, Depth);
-            _pixels = d.GetPixels();
-            return d;
+            return loader.Load(imagePath, Depth);
         }
 
         public void ToImage(string outputPath)

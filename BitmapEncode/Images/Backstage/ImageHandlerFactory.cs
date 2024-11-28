@@ -9,7 +9,7 @@ namespace BitmapEncode.Images.Backstage
         {
             return extension switch
             {
-                ".ppm" => new PpmImageHandler(),
+                ".ico" => new IcoImageHandler(),
                 ".bmp" => new BmpImageHandler(),
                 ".png" => new PngImageHandler(),
                 _ => throw new NotSupportedException($"Unsupported file format: {extension}")

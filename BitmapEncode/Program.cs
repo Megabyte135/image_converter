@@ -1,10 +1,4 @@
 ﻿using BitmapEncode.BitmapVariants;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace BitmapEncode
 {
@@ -12,11 +6,19 @@ namespace BitmapEncode
     {
         public static void Main(string[] args)
         {
-            string inputPath = "C:\\Users\\Yemeth\\Desktop\\images\\LIBRARIAN.ppm";
+            string inputPath = "C:\\Users\\Yemeth\\Desktop\\images\\LIBRARIAN.ico";
             string outputPath = "C:\\Users\\Yemeth\\Desktop\\images\\Flopping.bmp";
             
-            CustomBitmap customBitmap = new(inputPath, Images.PixelFormat.SixteenBit);
+            CustomBitmap customBitmap = new(inputPath, Images.PixelFormat.OneBit);
+
             customBitmap.ToImage(outputPath);
+
+            BitmapMeta<CustomBitmap> meta = new(inputPath, outputPath, customBitmap);
+            Console.WriteLine(meta.OriginalSize);
+            Console.WriteLine(meta.CompressedSize);
+            Console.WriteLine(meta.CalculateEntropy());
+            Console.WriteLine(meta.CalculateRedundancy());
+            Console.WriteLine(meta.CalculateCompressionRate());
         }
     }
 }

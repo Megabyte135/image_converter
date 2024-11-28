@@ -11,8 +11,15 @@ namespace BitmapEncode.Images.Handlers
         {
             using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read))
             {
-                BinaryReader reader = new BinaryReader(fs);
+                return Load(fs, depth);
+            }
+        }
 
+        // New method to load from a Stream
+        public IBitmap Load(Stream stream, PixelFormat depth)
+        {
+            using (BinaryReader reader = new BinaryReader(stream))
+            {
                 byte[] signature = reader.ReadBytes(8);
                 byte[] expectedSignature = new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 };
                 if (!CompareByteArrays(signature, expectedSignature))
@@ -74,6 +81,7 @@ namespace BitmapEncode.Images.Handlers
                             break;
 
                         default:
+                            // Ignore other chunks
                             break;
                     }
                 }
@@ -83,7 +91,7 @@ namespace BitmapEncode.Images.Handlers
 
                 int bytesPerPixel = GetBytesPerPixel(colorType, bitDepth);
                 int bitsPerPixel = bytesPerPixel * 8;
-                int stride = (width * bitsPerPixel + 7) / 8;
+                int stride = width * bytesPerPixel;
 
                 byte[] reconstructedData = new byte[height * stride];
 
