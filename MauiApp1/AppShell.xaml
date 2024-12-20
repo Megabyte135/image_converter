@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:local="clr-namespace:MauiApp1"
+       Shell.FlyoutBehavior="Flyout"
+       x:Class="MauiApp1.AppShell">
+
+    <FlyoutItem Title="Главная" Route="MainPage" Icon="home.svg">
+        <ShellContent ContentTemplate="{DataTemplate local:MainPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Галерея" Route="GalleryPage" Icon="gallery.svg">
+        <ShellContent ContentTemplate="{DataTemplate local:GalleryPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Настройки" Route="SettingsPage" Icon="settings.svg">
+        <ShellContent ContentTemplate="{DataTemplate local:SettingsPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="О приложении" Route="AboutPage" Icon="about.svg">
+        <ShellContent ContentTemplate="{DataTemplate local:AboutPage}" />
+    </FlyoutItem>
+    <FlyoutItem Title="Помощь" Route="HelpPage" Icon="help.svg">
+        <ShellContent ContentTemplate="{DataTemplate local:HelpPage}" />
+    </FlyoutItem>
+</Shell>

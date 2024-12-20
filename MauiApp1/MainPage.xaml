@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MauiApp1.MainPage"
+    Title="Выбор изображения">
+
+    <VerticalStackLayout Padding="20">
+        <Label Text="Выберите изображение (bmp, png, ico)" 
+               FontAttributes="Bold" 
+               HorizontalOptions="Center" />
+
+        <Button Text="Выбрать файл" Clicked="OnSelectImageClicked"/>
+
+        <Frame Padding="0" HasShadow="False" BackgroundColor="Transparent" InputTransparent="False">
+            <Image x:Name="SelectedImage" 
+                   HeightRequest="200" 
+                   Aspect="AspectFit" 
+                   Margin="0,20,0,20" />
+            <Frame.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnSelectedImageTapped" />
+            </Frame.GestureRecognizers>
+        </Frame>
+
+    </VerticalStackLayout>
+</ContentPage>

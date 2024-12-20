@@ -1,6 +1,4 @@
 ﻿using BitmapEncode.BitmapVariants;
-using BitmapEncode.Images;
-using System.Drawing;
 using Color = BitmapEncode.Images.Color;
 
 namespace BitmapEncode

@@ -101,7 +101,6 @@ namespace ImageConverterApp
             {
                 inputFilePath = openFileDialog.FileName;
 
-                // Загружаем изображение в память
                 using (var fs = new FileStream(inputFilePath, FileMode.Open, FileAccess.Read))
                 {
                     inputPictureBox.Image = Image.FromStream(fs);
@@ -123,23 +122,18 @@ namespace ImageConverterApp
 
             try
             {
-                // Создаем и сохраняем изображение
                 CustomBitmap customBitmap = new(inputFilePath, selectedFormat);
                 customBitmap.ToImage(outputFilePath);
 
-                // Создаем объект BitmapMeta
                 BitmapMeta<CustomBitmap> meta = new(inputFilePath, outputFilePath, customBitmap);
 
-                // Освобождаем предыдущие изображения
                 outputPictureBox.Image?.Dispose();
 
-                // Отображаем выходное изображение
                 using (var fs = new FileStream(outputFilePath, FileMode.Open, FileAccess.Read))
                 {
                     outputPictureBox.Image = Image.FromStream(fs);
                 }
 
-                // Заполняем текстовое поле
                 resultTextBox.Text = string.Join(Environment.NewLine, new[]
                 {
             $"Original Size: {meta.OriginalSize} bytes",

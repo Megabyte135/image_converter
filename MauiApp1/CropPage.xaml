@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="MauiApp1.CropPage"
+             Title="Обрезка изображения">
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="cropContainer" Grid.Row="0" BackgroundColor="Black">
+            <Image x:Name="sourceImage" 
+                   Aspect="AspectFit"
+                   HorizontalOptions="Center"
+                   VerticalOptions="Center"/>
+
+            <Grid x:Name="cropFrame" 
+                  BackgroundColor="#80000000"
+                  IsVisible="False">
+                <Border x:Name="cropArea"
+                       BackgroundColor="Transparent"
+                       Stroke="White"
+                       StrokeThickness="2"/>
+
+                <BoxView x:Name="topLeftHandle" 
+                        WidthRequest="20" 
+                        HeightRequest="20" 
+                        BackgroundColor="White"
+                        HorizontalOptions="Start" 
+                        VerticalOptions="Start"/>
+
+                <BoxView x:Name="topRightHandle"
+                        WidthRequest="20" 
+                        HeightRequest="20" 
+                        BackgroundColor="White"
+                        HorizontalOptions="End" 
+                        VerticalOptions="Start"/>
+
+                <BoxView x:Name="bottomLeftHandle"
+                        WidthRequest="20" 
+                        HeightRequest="20" 
+                        BackgroundColor="White"
+                        HorizontalOptions="Start" 
+                        VerticalOptions="End"/>
+
+                <BoxView x:Name="bottomRightHandle"
+                        WidthRequest="20" 
+                        HeightRequest="20" 
+                        BackgroundColor="White"
+                        HorizontalOptions="End" 
+                        VerticalOptions="End"/>
+            </Grid>
+        </Grid>
+
+        <HorizontalStackLayout Grid.Row="1" 
+                              Spacing="10" 
+                              HorizontalOptions="Center" 
+                              Margin="0,20,0,0">
+            <Button x:Name="cancelButton" 
+                    Text="Отмена" 
+                    WidthRequest="120"/>
+            <Button x:Name="confirmButton" 
+                    Text="Готово" 
+                    WidthRequest="120"/>
+        </HorizontalStackLayout>
+    </Grid>
+</ContentPage>

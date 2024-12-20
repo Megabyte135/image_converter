@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MauiApp1.HelpPage"
+    Title="Помощь">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="10">
+            <Label Text="Помощь" 
+                   FontSize="Large" 
+                   FontAttributes="Bold" 
+                   HorizontalOptions="Center"/>
+
+            <VerticalStackLayout>
+                <Label x:Name="section1Header" 
+                       Text="Как загрузить изображение?" 
+                       FontAttributes="Bold" 
+                       TextColor="Blue"/>
+                <VerticalStackLayout x:Name="section1Content" 
+                                     IsVisible="False" 
+                                     Opacity="0">
+                    <Label Text="Нажмите 'Выбрать изображение', затем выберите файл из списка."/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout>
+                <Label x:Name="section2Header" 
+                       Text="Как применить фильтр?" 
+                       FontAttributes="Bold" 
+                       TextColor="Blue"/>
+                <VerticalStackLayout x:Name="section2Content" 
+                                     IsVisible="False" 
+                                     Opacity="0">
+                    <Label Text="После загрузки изображения нажмите 'Фильтр (Ч/Б)', чтобы применить простой фильтр."/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout>
+                <Label x:Name="section3Header" 
+                       Text="Как сохранить результат?" 
+                       FontAttributes="Bold" 
+                       TextColor="Blue"/>
+                <VerticalStackLayout x:Name="section3Content" 
+                                     IsVisible="False" 
+                                     Opacity="0">
+                    <Label Text="Нажмите 'Сохранить', чтобы сохранить изображение. Сохраненное изображение можно найти в папке 'Загрузки'"/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+            <VerticalStackLayout>
+                <Label x:Name="section4Header" 
+                       Text="Как изменить тему?" 
+                       FontAttributes="Bold" 
+                       TextColor="Blue"/>
+                <VerticalStackLayout x:Name="section4Content" 
+                                     IsVisible="False" 
+                                     Opacity="0">
+                    <Label Text="Перейдите в 'Настройки' и выберите нужную тему."/>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

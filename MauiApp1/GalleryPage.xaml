@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MauiApp1.GalleryPage"
+    Title="Галерея">
+
+    <VerticalStackLayout Padding="20" Spacing="10">
+        <Picker x:Name="layoutPicker"
+                Title="Выберите вид отображения"
+                HorizontalOptions="Center"
+                WidthRequest="200">
+            <Picker.Items>
+                <x:String>Вертикальный список</x:String>
+                <x:String>Сетка 3x3</x:String>
+                <x:String>Сетка 4x4</x:String>
+            </Picker.Items>
+        </Picker>
+
+        <CollectionView x:Name="collectionView">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Spacing="5" HorizontalOptions="Center">
+                        <Image Source="{Binding FilePath}" HeightRequest="100" Aspect="AspectFit"/>
+                        <Label Text="{Binding FileName}" HorizontalOptions="Center"/>
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </VerticalStackLayout>
+</ContentPage>

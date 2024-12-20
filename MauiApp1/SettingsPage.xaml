@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<ContentPage 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:Class="MauiApp1.SettingsPage"
+    Title="Настройки">
+
+    <VerticalStackLayout Padding="20" Spacing="20" VerticalOptions="Center" HorizontalOptions="Center">
+        <Label Text="Настройки темы" FontAttributes="Bold" HorizontalOptions="Center"/>
+
+        <Picker x:Name="themePicker"
+                Title="Выберите тему"
+                HorizontalOptions="Center" 
+                WidthRequest="200">
+            <Picker.Items>
+                <x:String>Светлая</x:String>
+                <x:String>Тёмная</x:String>
+            </Picker.Items>
+        </Picker>
+
+        <Button x:Name="resetTutorialButton" Text="Сбросить обучение" HorizontalOptions="Center" WidthRequest="200"/>
+    </VerticalStackLayout>
+</ContentPage>

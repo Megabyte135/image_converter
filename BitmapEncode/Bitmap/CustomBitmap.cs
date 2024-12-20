@@ -1,6 +1,7 @@
 ﻿using BitmapEncode.Images;
 using BitmapEncode.Images.Backstage;
 using BitmapEncode.Images.Interfaces;
+using SkiaSharp;
 using System.Drawing;
 using Color = BitmapEncode.Images.Color;
 
@@ -21,16 +22,20 @@ namespace BitmapEncode.BitmapVariants
 
         public CustomBitmap(string inputPath, PixelFormat depth)
         {
-            Image image = Image.FromFile(inputPath);
-            if (image == null)
-                throw new ArgumentNullException(nameof(image));
-            Width = image.Width;
-            Height = image.Height;
-            Depth = depth;
-            _pixels = new Color[Width, Height];
-            FromImage(inputPath);
-        }
+            using (var fs = File.OpenRead(inputPath))
+            using (var stream = new SKManagedStream(fs))
+            {
+                var bitmap = SKBitmap.Decode(stream);
+                if (bitmap == null)
+                    throw new ArgumentNullException(nameof(bitmap));
 
+                Width = bitmap.Width;
+                Height = bitmap.Height;
+                Depth = depth;
+                _pixels = new Color[Width, Height];
+                FromImage(inputPath);
+            }
+        }
         public CustomBitmap(int width, int height, PixelFormat depth)
         {
             Width = width;
